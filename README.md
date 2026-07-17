@@ -80,6 +80,10 @@ Current Player Development fields may include:
 - Preserve historical reports rather than overwriting them.
 - Only current-status fields in Player Development should be overwritten by the newest qualified report.
 
+## Project Plan
+
+The first schema-first project plan is documented in [`docs/project-plan.md`](docs/project-plan.md). It covers the recommended repository folder structure, Airtable table list, field names, field types, links, lookups, Player Development overwrite fields, and historical records that should not be overwritten.
+
 ## Initial Codex Assignment
 
 Start by providing:
