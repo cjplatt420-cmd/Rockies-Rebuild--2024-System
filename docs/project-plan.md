@@ -1,7 +1,7 @@
 # Rockies Rebuild 2024 Project Plan
 
-**Plan version:** 2.0  
-**Status:** Approved required-field-first design  
+**Plan version:** 2.1  
+**Status:** Approved required-field-first design with Phase 2 Airtable field-type clarification  
 **Validation phase:** Spring Games 1–7  
 **Scope:** Planning documentation only
 
@@ -113,6 +113,8 @@ Only the fields below belong in the first build. Optional fields may be added af
 
 Purpose: player identity and verified baseline source of truth.
 
+Phase 2 implementation note: Airtable primary fields do not support the Link to another record type. Every table therefore uses a directly editable single-line-text record ID as its primary field. Player Name remains the readable linked-record field in downstream tables.
+
 | Required field | Airtable field type | Rule |
 | --- | --- | --- |
 | Player Record | Single line text, primary field | Display Player ID – Player Name; populate manually or during import in the first build. |
@@ -139,13 +141,15 @@ Purpose: one current development record per player with source-owned current fie
 
 | Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Player Name | Link to Colorado Rockies Base, primary field | One Player Development record per linked player. |
-| Player ID | Lookup | From Colorado Rockies Base. |
+| Player Development Record | Single line text, primary field | Unique current-record ID using PD-Player ID; create only for a verified Player ID. |
+| Player Name | Link to Colorado Rockies Base | One Player Development record per linked player; allow one linked player only. |
+| Player ID | Lookup | From Colorado Rockies Base through Player Name. |
 | Position | Lookup | From Colorado Rockies Base. |
 | Level | Lookup | From Colorado Rockies Base. |
 | Overall Rating | Lookup | From Colorado Rockies Base. |
 | Potential | Lookup | From Colorado Rockies Base. |
-| Latest Game ID | Link to Daily Baseball | Most recent qualified game update. |
+| Latest Game Record | Link to Daily Baseball | Most recent qualified game-record version; allow one linked record only. |
+| Latest Game ID | Lookup | Stable logical Game ID from Latest Game Record. |
 | Latest Game Date | Date | Date of most recent qualified game evidence. |
 | Latest Game Source Report | Link to Source Reports | Evidence supporting the current game-owned fields. |
 | Latest Game Source Updated Date | Date | Date the game-owned fields were applied. |
@@ -210,7 +214,8 @@ Purpose: historical hitter evidence and zone analysis.
 | Required field | Airtable field type | Rule |
 | --- | --- | --- |
 | Hitter Report ID | Single line text, primary field | Unique versioned ID using HZR-Game ID-NNN-VNN. |
-| Game ID | Link to Daily Baseball | Game that produced the report. |
+| Game Record | Link to Daily Baseball | Exact game-record version that produced the report; allow one linked record only. |
+| Game ID | Lookup | Stable logical Game ID from Game Record. |
 | Report Date | Date | Report date. |
 | Player Name | Link to Colorado Rockies Base | Link only when identity is verified. |
 | Player ID | Lookup | From Colorado Rockies Base. |
@@ -234,7 +239,8 @@ Purpose: historical pitcher evidence, zone use, and arsenal analysis.
 | Required field | Airtable field type | Rule |
 | --- | --- | --- |
 | Pitcher Report ID | Single line text, primary field | Unique versioned ID using PZR-Game ID-NNN-VNN. |
-| Game ID | Link to Daily Baseball | Game that produced the report. |
+| Game Record | Link to Daily Baseball | Exact game-record version that produced the report; allow one linked record only. |
+| Game ID | Lookup | Stable logical Game ID from Game Record. |
 | Report Date | Date | Report date. |
 | Player Name | Link to Colorado Rockies Base | Link only when identity is verified. |
 | Player ID | Lookup | From Colorado Rockies Base. |
@@ -308,14 +314,15 @@ Purpose: preserve the source, coverage, routing, correction, and version trail b
 | Source Report ID | Single line text, primary field | Unique versioned ID using the approved Source Report ID format. |
 | Source Date | Date | Date of source or observation. |
 | Source Type | Single select | Dictated game feed, box score, screenshot, foundation report, transaction update, manual correction, or other supplied type. |
-| Game ID | Link to Daily Baseball | Optional game connection. |
+| Game Record | Link to Daily Baseball | Optional exact game-record version; allow one linked record only. |
+| Game ID | Lookup | Stable logical Game ID from Game Record when linked. |
 | Linked Players | Link to Colorado Rockies Base | Only verified player identities. |
 | Source Content/Summary | Long text | Supplied evidence or faithful summary. |
 | Inning Coverage | Long text | Exact innings or half-innings supplied. |
 | Coverage Status | Single select | Complete, partial, result-only, missing, or pending. |
 | Missing Information | Long text | Explicitly identify gaps. |
 | Correction Notes | Long text | Exact changes and their source. |
-| Supersedes Source Report | Link to Source Reports | Earlier version when corrected. |
+| Supersedes Record | Link to Source Reports | Earlier source version; never delete or overwrite it. |
 | Version | Number | Increment for a corrected source. |
 | Workflow Destinations | Multiple select | All required report destinations. |
 | Processing Status | Single select | Unprocessed, routed, complete, incomplete, corrected, or superseded. |
@@ -331,7 +338,7 @@ Purpose: preserve the source, coverage, routing, correction, and version trail b
 | Acquisitions.Player Name | Colorado Rockies Base | Verified target or transaction identity. |
 | Front Office/Financials.Player Name | Colorado Rockies Base | Player-specific financial decision. |
 | All report tables.Source Reports | Source Reports | Evidence, coverage, corrections, and version trail. |
-| Zone reports.Game ID | Daily Baseball | Tie player evidence to the historical game. |
+| Zone reports.Game Record | Daily Baseball | Tie player evidence to the exact historical game-record version. |
 | Daily Baseball zone links | Hitter/Pitcher Zone Reports | Navigate from the game to derived reports. |
 | Front Office/Financials.Acquisition Record | Acquisitions | Tie financial impact to the related roster decision. |
 
