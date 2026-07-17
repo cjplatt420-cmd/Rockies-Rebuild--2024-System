@@ -1,47 +1,60 @@
 # Rockies Rebuild 2024 Project Plan
 
-This plan defines the first Airtable-ready structure for the Rockies Rebuild 2024 system. It is intentionally schema-first: no formulas, automations, scripts, or import templates should be built until these tables, links, lookup fields, and overwrite rules are approved.
+**Plan version:** 2.0  
+**Status:** Approved required-field-first design  
+**Validation phase:** Spring Games 1–7  
+**Scope:** Planning documentation only
 
-## Recommended Repository Folder Structure
+This plan defines the first Airtable-ready build for the Rockies Rebuild 2024 system. The first build is intentionally small: create and validate required fields before adding optional fields, import templates, formulas, automations, scripts, or dashboards.
 
-```text
+## Permanent Evidence Rule
+
+This rule applies to every table, report, handoff packet, import, correction, and future automation:
+
+> Do not invent missing details or Player IDs.
+
+- Store only information supported by the supplied source.
+- Mark missing innings, pitch data, game details, and identifiers as missing, incomplete, pending, or unresolved.
+- Never infer or manufacture a Player ID from a player name.
+- A record without a verified Player ID may remain unlinked until the correct player is identified.
+- Corrections must preserve the earlier record or version and clearly identify what changed.
+- Limited or result-only coverage must not be presented as complete pitch-by-pitch coverage.
+
+## Approved Repository Structure
+
+This is the approved planning structure. Empty templates, formulas, and automations are not part of PR #2.
+
+~~~text
 Rockies-Rebuild--2024-System/
 ├── README.md
 ├── docs/
 │   ├── system-overview.md
-│   ├── project-plan.md
-│   ├── airtable-schema.md
+│   ├── airtable-setup-guide.md
 │   ├── linking-rules.md
-│   ├── player-development-rules.md
-│   └── report-history-rules.md
-├── airtable/
-│   ├── tables/
-│   │   ├── colorado-rockies-base.md
-│   │   ├── player-development.md
-│   │   ├── daily-baseball.md
-│   │   ├── hitter-zone-reports.md
-│   │   ├── pitcher-zone-reports.md
-│   │   ├── acquisitions.md
-│   │   └── front-office-financials.md
-│   ├── field-maps/
-│   │   ├── base-field-map.md
-│   │   ├── development-field-map.md
-│   │   ├── lookup-field-map.md
-│   │   └── report-field-map.md
-│   ├── import-templates/
-│   └── automations/
-├── reports/
-│   ├── foundation/
-│   ├── complete-game-analysis/
-│   ├── hitter-zone/
-│   ├── pitcher-zone/
-│   └── acquisitions/
-└── exports/
-    ├── csv/
-    └── airtable-schema/
-```
+│   ├── overwrite-rules.md
+│   ├── field-definitions.md
+│   └── project-plan.md
+├── airtable-templates/
+│   ├── 01-colorado-rockies-base/
+│   ├── 02-player-development/
+│   ├── 03-daily-baseball/
+│   ├── 04-hitter-zone-reports/
+│   ├── 05-pitcher-zone-reports/
+│   ├── 06-acquisitions/
+│   └── 07-front-office-financials/
+└── import-templates/
+    ├── players-import.csv
+    ├── player-development-import.csv
+    ├── games-import.csv
+    ├── hitter-reports-import.csv
+    ├── pitcher-reports-import.csv
+    ├── acquisitions-import.csv
+    └── financials-import.csv
+~~~
 
-## Airtable Table List
+## Table Scope
+
+### Seven main workflow tables
 
 1. Colorado Rockies Base
 2. Player Development
@@ -51,279 +64,349 @@ Rockies-Rebuild--2024-System/
 6. Acquisitions
 7. Front Office/Financials
 
+### Required supporting table
+
+8. Source Reports
+
+Source Reports preserves source evidence, coverage, corrections, versions, and routing. It supports the seven main workflow tables but is not a separate decision-making workflow.
+
 ## Core Linking Model
 
-- **Player ID** is the stable player key across every table.
-- **Player Name** is the readable linked-record display field.
-- **Colorado Rockies Base** is the source of truth for permanent player identity, roster, role, contract, and baseline scouting information.
-- Every player-centered workflow table links back to **Colorado Rockies Base**.
-- Workflow tables should use lookup fields for baseline information instead of manually duplicating it.
-- Report tables preserve historical records. They should not overwrite old reports.
-- **Player Development** keeps one current record per player and receives latest-game overwrite updates from qualified reports.
+- Colorado Rockies Base is the player source of truth.
+- Player ID is the stable unique player key.
+- Player Name is the readable name used in linked-record fields.
+- The recommended Colorado Rockies Base primary display value is Player ID – Player Name.
+- Downstream player links point to Colorado Rockies Base and obtain Player ID through a lookup.
+- Player Development contains one current record per player.
+- Daily Baseball, zone reports, acquisitions, financial records, and source reports remain historical and additive.
+- Airtable-created reciprocal links should be used instead of manually creating duplicate link fields.
+- Missing Player IDs remain unresolved; they are never invented.
 
-## Table Schemas
+## Required-Field-First Schemas
+
+Only the fields below belong in the first build. Optional fields may be added after the Spring Games 1–7 test.
 
 ### 1. Colorado Rockies Base
 
-Primary purpose: permanent player master table and baseline information source.
+Purpose: player identity and verified baseline source of truth.
 
-| Field name | Airtable field type | Notes |
+| Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Player Name | Single line text, primary field | Readable player name. |
-| Player ID | Single line text | Stable unique player key. Required for linking and imports. |
-| Organization | Single select | MLB organization, default Colorado Rockies when applicable. |
-| Level | Single select | MLB, AAA, AA, High-A, Low-A, Complex, DSL, injured list, free agent, target, etc. |
-| Position | Single select | Primary defensive position. |
-| Secondary Positions | Multiple select | Optional defensive flexibility. |
-| Age | Number | Baseline age. |
-| Bats | Single select | R, L, S. |
-| Throws | Single select | R, L. |
-| Overall Rating | Number | Current overall evaluation. |
-| Potential | Number | Future projection. |
-| Organizational Role | Single select | Core, regular, depth, prospect, lottery ticket, trade target, DFA risk, etc. |
-| Contract Status | Single select | Pre-arb, arbitration, guaranteed, minor league, free agent, etc. |
-| Forty-Man Status | Checkbox | Whether the player is on the 40-man roster. |
-| Service/Control Notes | Long text | Contract control context. |
-| Acquisition Source | Single select | Draft, international, trade, waiver, free agency, Rule 5, inherited, etc. |
-| Acquisition Date | Date | Date player entered the organization. |
-| Current Roster Status | Single select | Active, injured, optioned, suspended, released, target, etc. |
-| Rebuild Fit Baseline | Single select | Long-term fit, short-term bridge, trade chip, depth, watch, no fit. |
-| Baseline Notes | Long text | Static scouting and organizational notes. |
-| Player Development Link | Link to another record | Links to Player Development. |
-| Daily Baseball Links | Link to another record | Links to Daily Baseball records. |
-| Hitter Zone Report Links | Link to another record | Links to Hitter Zone Reports. |
-| Pitcher Zone Report Links | Link to another record | Links to Pitcher Zone Reports. |
-| Acquisition Links | Link to another record | Links to Acquisitions. |
-| Financial Links | Link to another record | Links to Front Office/Financials. |
+| Player Record | Formula, primary field | Display Player ID – Player Name. |
+| Player ID | Single line text | Stable unique key; required only when verified. |
+| Player Name | Single line text | Readable player name. |
+| Organization | Single select | Current organization. |
+| Level | Single select | Playing level only: MLB, AAA, AA, High-A, Low-A, Complex, or DSL. |
+| Roster Status | Single select | Active, injured list, optioned, released, free agent, target, or other verified status. |
+| Position | Single select | Primary position. |
+| Age | Number | Verified age. |
+| Bats | Single select | R, L, or S. |
+| Throws | Single select | R or L. |
+| Overall Rating | Number | Current supplied rating. |
+| Potential | Single select | Letter grade such as A, B, C, or D. |
+| Organizational Role | Single select | Verified baseline role. |
+| Contract Summary | Long text | Verified contract and control information. |
+| Baseline Report | Long text | Foundation scouting and organizational read. |
+| Baseline Version | Number | Current baseline version. |
+| Baseline Updated Date | Date | Date of latest verified baseline update. |
 
 ### 2. Player Development
 
-Primary purpose: one current development record per player, updated by the latest qualified game/report inputs.
+Purpose: one current development record per player with source-owned current fields.
 
-| Field name | Airtable field type | Notes |
+| Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Player Name | Link to another record | Link to Colorado Rockies Base; readable linked field. |
-| Player ID | Lookup | Lookup from Colorado Rockies Base. |
-| Position | Lookup | Lookup from Colorado Rockies Base. |
-| Level | Lookup | Lookup from Colorado Rockies Base. |
-| Age | Lookup | Lookup from Colorado Rockies Base. |
-| Bats | Lookup | Lookup from Colorado Rockies Base. |
-| Throws | Lookup | Lookup from Colorado Rockies Base. |
-| Overall Rating | Lookup | Lookup from Colorado Rockies Base. |
-| Potential | Lookup | Lookup from Colorado Rockies Base. |
-| Contract Status | Lookup | Lookup from Colorado Rockies Base. |
-| Forty-Man Status | Lookup | Lookup from Colorado Rockies Base. |
-| Baseline Organizational Role | Lookup | Lookup from Colorado Rockies Base. |
-| Current Development Trend | Single select | Overwritten by latest qualified report. |
-| Trend Direction | Single select | Up, down, stable, volatile, unknown; overwritten by latest qualified report. |
-| Latest-Game Status | Single select | Strong, acceptable, concern, injured, no data, etc.; overwritten. |
-| Recent Positives | Long text | Overwritten summary from latest qualified report. |
-| Recent Negatives | Long text | Overwritten summary from latest qualified report. |
-| Development Advice | Long text | Overwritten current recommendation. |
-| Current Organizational Role | Single select | Current role assessment, can differ from baseline. |
-| Rebuild Fit | Single select | Current fit assessment. |
-| Recommendation | Single select | Promote, hold, demote, acquire, sell high, monitor, release, etc. |
-| Watch Status | Single select | Priority watch, normal watch, no watch, urgent. |
-| Acquisition Impact | Long text | Current acquisition or roster impact summary. |
-| Roster Impact | Long text | Current roster movement impact summary. |
-| Last Updated Date | Date | Date latest overwrite was applied. |
-| Latest Source Report | Single line text | Name or ID of report that supplied current fields. |
-| Latest Game Number | Number | Game number from latest qualified input. |
-| Linked Daily Baseball Records | Link to another record | Historical game records. |
-| Linked Hitter Zone Reports | Link to another record | Historical hitter reports. |
-| Linked Pitcher Zone Reports | Link to another record | Historical pitcher reports. |
-| Linked Acquisition Records | Link to another record | Historical acquisition records. |
+| Player Name | Link to Colorado Rockies Base, primary field | One Player Development record per linked player. |
+| Player ID | Lookup | From Colorado Rockies Base. |
+| Position | Lookup | From Colorado Rockies Base. |
+| Level | Lookup | From Colorado Rockies Base. |
+| Overall Rating | Lookup | From Colorado Rockies Base. |
+| Potential | Lookup | From Colorado Rockies Base. |
+| Latest Game ID | Link to Daily Baseball | Most recent qualified game update. |
+| Latest Game Date | Date | Date of most recent qualified game evidence. |
+| Latest-Game Status | Single select | Positive, negative, mixed, neutral, or no grade. |
+| Current Trend | Single select | Up, down, stable, volatile, or insufficient evidence. |
+| Recent Positives | Long text | Latest qualified game-derived positives. |
+| Recent Negatives | Long text | Latest qualified game-derived negatives. |
+| Development Advice | Long text | Current evidence-based advice. |
+| Hitter Trend Summary | Long text | Latest qualified Hitter Zone synthesis, when applicable. |
+| Pitcher Trend Summary | Long text | Latest qualified Pitcher Zone synthesis, when applicable. |
+| Acquisition Impact | Long text | Owned by Acquisitions updates. |
+| Roster Impact | Long text | Owned by verified transaction or roster updates. |
+| Financial/Control Impact | Long text | Owned by Front Office/Financials updates. |
+| Current Organizational Role | Single select | Changed only by a qualified Player Development synthesis. |
+| Current Rebuild Fit | Single select | Changed only by a qualified Player Development synthesis. |
+| Watch Status | Single select | Priority, normal, none, or insufficient evidence. |
+| Latest Source Report ID | Link to Source Reports | Source supporting the latest applied update. |
+| Last Updated Date | Date | Date the current record was last updated. |
+| Current Record Version | Number | Increment when current fields change. |
 
 ### 3. Daily Baseball
 
-Primary purpose: game-by-game historical log for team and player observations.
+Purpose: one historical complete-game record per game.
 
-| Field name | Airtable field type | Notes |
+| Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Game Record | Autonumber or single line text, primary field | Unique daily/game record label. |
-| Game Date | Date | Date of game. |
-| Game Number | Number | Season or save-file game number. |
-| Opponent | Single line text | Opposing team. |
-| Rockies Level | Single select | MLB, AAA, AA, etc. |
-| Player Name | Link to another record | Link to Colorado Rockies Base when player-specific. |
-| Player ID | Lookup | Lookup from Colorado Rockies Base. |
-| Position | Lookup | Lookup from Colorado Rockies Base. |
-| Level | Lookup | Lookup from Colorado Rockies Base. |
-| Game Role | Single select | Starter, bench, reliever, opener, closer, pinch hitter, defensive replacement, etc. |
-| Box Score Summary | Long text | Historical game summary. |
-| Key Result | Single select | Positive, negative, mixed, neutral, injury, transaction. |
-| Development Signal | Single select | Up, down, stable, no signal. |
-| Player Development Link | Link to another record | Link to current Player Development record. |
-| Source Report Type | Single select | Complete game analysis, daily note, manual observation, etc. |
-| Source Notes | Long text | Historical source details. |
+| Game ID | Single line text, primary field | Stable unique game identifier. |
+| Game Date | Date | Game date. |
+| Game Phase | Single select | Spring, regular season, postseason, or other supplied phase. |
+| Game Number | Number | Supplied game number within the phase. |
+| Opponent | Single line text | Opposing club. |
+| Home/Away | Single select | Home or away. |
+| Final Score | Single line text | Supplied final score; may remain pending. |
+| Game Result | Single select | Win, loss, tie, incomplete, or pending. |
+| Inning Coverage | Long text | Exact innings or half-innings supplied. |
+| Coverage Status | Single select | Complete, partial, result-only, missing innings, or pending. |
+| Complete Game Analysis | Long text | Evidence-based team and game analysis. |
+| Player Development Summary | Long text | Game-level development conclusions. |
+| Linked Players | Link to Colorado Rockies Base | Verified players discussed in the record. |
+| Hitter Zone Reports | Link to Hitter Zone Reports | Historical reports produced from the game. |
+| Pitcher Zone Reports | Link to Pitcher Zone Reports | Historical reports produced from the game. |
+| Source Reports | Link to Source Reports | Evidence used for the game record. |
+| Workflow Destinations | Multiple select | Daily Baseball, Player Development, Hitter Zone, Pitcher Zone, Acquisitions, Front Office/Financials, or archive. |
+| Report Status | Single select | Draft, complete, incomplete, corrected, or superseded. |
+| Correction Status | Single select | None, correction pending, corrected, or superseded. |
+| Correction Notes | Long text | Exact corrections without rewriting unsupported details. |
+| Version | Number | Increment for each corrected game record. |
 
 ### 4. Hitter Zone Reports
 
-Primary purpose: historical hitter-specific zone analysis reports.
+Purpose: historical hitter evidence and zone analysis.
 
-| Field name | Airtable field type | Notes |
+| Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Hitter Report ID | Autonumber or single line text, primary field | Unique hitter report record. |
-| Report Date | Date | Date of report. |
-| Game Number | Number | Game number tied to report. |
-| Player Name | Link to another record | Link to Colorado Rockies Base. |
-| Player ID | Lookup | Lookup from Colorado Rockies Base. |
-| Position | Lookup | Lookup from Colorado Rockies Base. |
-| Level | Lookup | Lookup from Colorado Rockies Base. |
-| Bats | Lookup | Lookup from Colorado Rockies Base. |
-| Plate Discipline Trend | Single select | Improving, declining, stable, unknown. |
-| Contact Quality Trend | Single select | Improving, declining, stable, unknown. |
-| Power Trend | Single select | Improving, declining, stable, unknown. |
-| Chase Zone Notes | Long text | Historical zone analysis. |
-| Damage Zone Notes | Long text | Historical zone analysis. |
-| Weakness Zone Notes | Long text | Historical zone analysis. |
-| Adjustment Needed | Long text | Historical recommendation from this report. |
-| Current Development Signal | Single select | Up, down, stable, volatile. |
-| Player Development Link | Link to another record | Link to one current development record. |
-| Should Update Player Development | Checkbox | Marks report as qualified to overwrite latest fields. |
-| Source File/Report | Single line text | File, report name, or source identifier. |
+| Hitter Report ID | Single line text, primary field | Stable unique report identifier. |
+| Game ID | Link to Daily Baseball | Game that produced the report. |
+| Report Date | Date | Report date. |
+| Player Name | Link to Colorado Rockies Base | Link only when identity is verified. |
+| Player ID | Lookup | From Colorado Rockies Base. |
+| Coverage Status | Single select | Pitch-by-pitch, partial, result-only, missing, or pending. |
+| Plate-Appearance Evidence | Long text | Supplied pitch, zone, contact, and result evidence. |
+| Zone Findings | Long text | Supported chase, damage, weakness, and contact findings. |
+| Game Development Signal | Single select | Up, down, stable, mixed, or no grade. |
+| Development Recommendation | Long text | Evidence-based current recommendation. |
+| Player Development Qualified | Checkbox | Checked only when evidence is sufficient for an update. |
+| Source Reports | Link to Source Reports | Supporting evidence. |
+| Workflow Destinations | Multiple select | Required routing destinations. |
+| Report Status | Single select | Draft, complete, incomplete, corrected, or superseded. |
+| Correction Notes | Long text | Exact correction record. |
+| Version | Number | Increment for each correction. |
 
 ### 5. Pitcher Zone Reports
 
-Primary purpose: historical pitcher-specific zone and arsenal analysis reports.
+Purpose: historical pitcher evidence, zone use, and arsenal analysis.
 
-| Field name | Airtable field type | Notes |
+| Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Pitcher Report ID | Autonumber or single line text, primary field | Unique pitcher report record. |
-| Report Date | Date | Date of report. |
-| Game Number | Number | Game number tied to report. |
-| Player Name | Link to another record | Link to Colorado Rockies Base. |
-| Player ID | Lookup | Lookup from Colorado Rockies Base. |
-| Position | Lookup | Lookup from Colorado Rockies Base. |
-| Level | Lookup | Lookup from Colorado Rockies Base. |
-| Throws | Lookup | Lookup from Colorado Rockies Base. |
-| Command Trend | Single select | Improving, declining, stable, unknown. |
-| Stuff Trend | Single select | Improving, declining, stable, unknown. |
-| Pitch Mix Trend | Single select | Improving, declining, stable, unknown. |
-| Strike Zone Notes | Long text | Historical zone analysis. |
-| Chase/Whiff Zone Notes | Long text | Historical zone analysis. |
-| Damage Allowed Zone Notes | Long text | Historical zone analysis. |
-| Arsenal Adjustment Needed | Long text | Historical recommendation from this report. |
-| Current Development Signal | Single select | Up, down, stable, volatile. |
-| Player Development Link | Link to another record | Link to one current development record. |
-| Should Update Player Development | Checkbox | Marks report as qualified to overwrite latest fields. |
-| Source File/Report | Single line text | File, report name, or source identifier. |
+| Pitcher Report ID | Single line text, primary field | Stable unique report identifier. |
+| Game ID | Link to Daily Baseball | Game that produced the report. |
+| Report Date | Date | Report date. |
+| Player Name | Link to Colorado Rockies Base | Link only when identity is verified. |
+| Player ID | Lookup | From Colorado Rockies Base. |
+| Coverage Status | Single select | Pitch-by-pitch, partial, result-only, missing, or pending. |
+| Batter/Pitch Evidence | Long text | Supplied pitch, zone, velocity, count, and result evidence. |
+| Zone and Arsenal Findings | Long text | Supported command, whiff, damage, and pitch-mix findings. |
+| Game Development Signal | Single select | Up, down, stable, mixed, or no grade. |
+| Development Recommendation | Long text | Evidence-based current recommendation. |
+| Player Development Qualified | Checkbox | Checked only when evidence is sufficient for an update. |
+| Source Reports | Link to Source Reports | Supporting evidence. |
+| Workflow Destinations | Multiple select | Required routing destinations. |
+| Report Status | Single select | Draft, complete, incomplete, corrected, or superseded. |
+| Correction Notes | Long text | Exact correction record. |
+| Version | Number | Increment for each correction. |
 
 ### 6. Acquisitions
 
-Primary purpose: track targets, roster moves, acquired players, trade candidates, and transaction rationale.
+Purpose: historical targets, transactions, roster moves, and acquisition decisions.
 
-| Field name | Airtable field type | Notes |
+| Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Acquisition Record | Autonumber or single line text, primary field | Unique acquisition/transaction record. |
-| Player Name | Link to another record | Link to Colorado Rockies Base for known players. |
-| Player ID | Lookup | Lookup from Colorado Rockies Base when linked. |
-| Position | Lookup | Lookup from Colorado Rockies Base. |
-| Age | Lookup | Lookup from Colorado Rockies Base. |
-| Current Organization | Single line text | External org or Rockies level at time of move. |
-| Acquisition Type | Single select | Trade, free agency, waiver, draft, international, Rule 5, extension, release, DFA, target. |
-| Transaction Date | Date | Date of move or evaluation. |
-| Acquisition Status | Single select | Target, active pursuit, acquired, passed, lost, completed, rejected. |
-| Cost/Return | Long text | Assets sent or expected cost. |
-| Scouting Summary | Long text | Player-specific acquisition evaluation. |
-| Roster Fit | Single select | MLB help, prospect upside, depth, financial move, no fit, etc. |
-| Rebuild Fit | Single select | Strong, moderate, weak, no fit, unknown. |
-| Risk Level | Single select | Low, medium, high. |
-| Recommendation | Single select | Acquire, monitor, pass, sell, hold, release. |
-| Player Development Link | Link to another record | Connects acquisition impact to current development record. |
-| Financial Link | Link to another record | Connects to financial/contract impact record. |
-| Source Notes | Long text | Historical rationale and evidence. |
+| Acquisition Record ID | Single line text, primary field | Stable unique evaluation or transaction ID. |
+| Record Date | Date | Evaluation or transaction date. |
+| Player Name | Link to Colorado Rockies Base | Link only if the player exists with verified identity. |
+| Player ID | Lookup | From Colorado Rockies Base; never invented for an external target. |
+| Unlinked Player Name | Single line text | Temporary readable name when a verified link is unavailable. |
+| Acquisition Type | Single select | Target, trade, free agent, waiver, extension, DFA, release, or other verified type. |
+| Acquisition Status | Single select | Evaluating, recommended, completed, passed, lost, or pending. |
+| Evaluation | Long text | Evidence and organizational analysis. |
+| Cost/Return | Long text | Verified or explicitly projected cost and return. |
+| Roster Impact | Long text | Acquisition-owned roster effect. |
+| Recommendation | Single select | Acquire, monitor, hold, trade, pass, release, or pending. |
+| Source Reports | Link to Source Reports | Supporting report or transaction evidence. |
+| Workflow Destinations | Multiple select | Acquisitions, Player Development, Colorado Rockies Base, Front Office/Financials, or archive. |
+| Report Status | Single select | Draft, complete, incomplete, corrected, or superseded. |
+| Correction Notes | Long text | Exact corrections. |
+| Version | Number | Increment for each correction. |
 
 ### 7. Front Office/Financials
 
-Primary purpose: financial commitments, payroll planning, roster control, and front-office decision tracking.
+Purpose: historical payroll, contract, control, and decision records.
 
-| Field name | Airtable field type | Notes |
+| Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Financial Record | Autonumber or single line text, primary field | Unique financial/planning record. |
-| Player Name | Link to another record | Link to Colorado Rockies Base when player-specific. |
-| Player ID | Lookup | Lookup from Colorado Rockies Base. |
-| Position | Lookup | Lookup from Colorado Rockies Base. |
-| Contract Status | Lookup | Lookup from Colorado Rockies Base. |
-| Forty-Man Status | Lookup | Lookup from Colorado Rockies Base. |
-| Payroll Year | Number | Season/year. |
-| Salary/Commitment | Currency | Salary, bonus, or projected commitment. |
-| Arbitration Estimate | Currency | If applicable. |
-| Option Status | Single select | Team option, player option, mutual option, no option, unknown. |
-| Control Years Remaining | Number | Approximate years of club control. |
-| Roster Decision | Single select | Keep, trade, non-tender, extend, DFA, release, protect, expose. |
-| Financial Priority | Single select | High, medium, low. |
-| Budget Impact | Single select | Adds payroll, reduces payroll, neutral, unknown. |
-| Acquisition Link | Link to another record | Links financial impact to Acquisitions. |
-| Player Development Link | Link to another record | Links financial decision to current player evaluation. |
-| Front Office Notes | Long text | Planning notes. |
+| Financial Record ID | Single line text, primary field | Stable unique financial record ID. |
+| Record Date | Date | Date of the financial record. |
+| Player Name | Link to Colorado Rockies Base | Optional for team-level records. |
+| Player ID | Lookup | From Colorado Rockies Base when linked. |
+| Record Type | Single select | Contract, payroll, transaction cost, budget, extension, option, or other verified type. |
+| Payroll Year | Number | Relevant season. |
+| Amount | Currency | Verified or clearly labeled projected amount. |
+| Contract/Control Summary | Long text | Verified terms and control information. |
+| Budget Impact | Long text | Team financial effect. |
+| Decision Status | Single select | Proposed, approved, completed, rejected, or pending. |
+| Acquisition Record | Link to Acquisitions | Related transaction or evaluation. |
+| Source Reports | Link to Source Reports | Supporting evidence. |
+| Workflow Destinations | Multiple select | Front Office/Financials, Acquisitions, Player Development, Colorado Rockies Base, or archive. |
+| Report Status | Single select | Draft, complete, incomplete, corrected, or superseded. |
+| Correction Notes | Long text | Exact corrections. |
+| Version | Number | Increment for each correction. |
 
-## Required Links Between Tables
+### 8. Source Reports
 
-| From table | Field | To table | Purpose |
-| --- | --- | --- | --- |
-| Player Development | Player Name | Colorado Rockies Base | One current development record per player. |
-| Daily Baseball | Player Name | Colorado Rockies Base | Historical daily/game records by player. |
-| Daily Baseball | Player Development Link | Player Development | Connect daily signals to current trend record. |
-| Hitter Zone Reports | Player Name | Colorado Rockies Base | Historical hitter reports by player. |
-| Hitter Zone Reports | Player Development Link | Player Development | Qualified reports can update current development. |
-| Pitcher Zone Reports | Player Name | Colorado Rockies Base | Historical pitcher reports by player. |
-| Pitcher Zone Reports | Player Development Link | Player Development | Qualified reports can update current development. |
-| Acquisitions | Player Name | Colorado Rockies Base | Transaction and target records by player. |
-| Acquisitions | Player Development Link | Player Development | Acquisition impact on player evaluation. |
-| Acquisitions | Financial Link | Front Office/Financials | Transaction impact on payroll/control. |
-| Front Office/Financials | Player Name | Colorado Rockies Base | Player-specific financial planning. |
-| Front Office/Financials | Player Development Link | Player Development | Connect roster decisions to current evaluation. |
+Purpose: preserve the source, coverage, routing, correction, and version trail behind every derived report.
 
-## Recommended Lookup Fields
+| Required field | Airtable field type | Rule |
+| --- | --- | --- |
+| Source Report ID | Single line text, primary field | Stable unique source identifier. |
+| Source Date | Date | Date of source or observation. |
+| Source Type | Single select | Dictated game feed, box score, screenshot, foundation report, transaction update, manual correction, or other supplied type. |
+| Game ID | Link to Daily Baseball | Optional game connection. |
+| Linked Players | Link to Colorado Rockies Base | Only verified player identities. |
+| Source Content/Summary | Long text | Supplied evidence or faithful summary. |
+| Inning Coverage | Long text | Exact innings or half-innings supplied. |
+| Coverage Status | Single select | Complete, partial, result-only, missing, or pending. |
+| Missing Information | Long text | Explicitly identify gaps. |
+| Correction Notes | Long text | Exact changes and their source. |
+| Supersedes Source Report | Link to Source Reports | Earlier version when corrected. |
+| Version | Number | Increment for a corrected source. |
+| Workflow Destinations | Multiple select | All required report destinations. |
+| Processing Status | Single select | Unprocessed, routed, complete, incomplete, corrected, or superseded. |
 
-Use these baseline lookups in workflow tables whenever the table links to Colorado Rockies Base:
+## Required Links
 
-- Player ID
-- Position
-- Level
-- Age
-- Bats
-- Throws
-- Overall Rating
-- Potential
-- Contract Status
-- Forty-Man Status
-- Organizational Role
-- Current Roster Status
-- Rebuild Fit Baseline
+| From | To | Purpose |
+| --- | --- | --- |
+| Player Development.Player Name | Colorado Rockies Base | One current record per verified player. |
+| Daily Baseball.Linked Players | Colorado Rockies Base | Players supported by the game evidence. |
+| Hitter Zone Reports.Player Name | Colorado Rockies Base | Verified hitter identity. |
+| Pitcher Zone Reports.Player Name | Colorado Rockies Base | Verified pitcher identity. |
+| Acquisitions.Player Name | Colorado Rockies Base | Verified target or transaction identity. |
+| Front Office/Financials.Player Name | Colorado Rockies Base | Player-specific financial decision. |
+| All report tables.Source Reports | Source Reports | Evidence, coverage, corrections, and version trail. |
+| Zone reports.Game ID | Daily Baseball | Tie player evidence to the historical game. |
+| Daily Baseball zone links | Hitter/Pitcher Zone Reports | Navigate from the game to derived reports. |
+| Acquisitions.Acquisition Record | Front Office/Financials | Tie roster decisions to financial impact. |
 
-## Player Development Latest-Game Overwrite Fields
+## Source-Specific Overwrite Rules
 
-Only these current-status fields should be overwritten by the newest qualified report:
+Historical source and report records are additive. Only Player Development current fields may be overwritten, and each source may update only the fields it owns.
 
-- Current Development Trend
-- Trend Direction
+### Daily Baseball owns
+
+- Latest Game ID
+- Latest Game Date
 - Latest-Game Status
 - Recent Positives
 - Recent Negatives
-- Development Advice
-- Current Organizational Role
-- Rebuild Fit
-- Recommendation
-- Watch Status
-- Acquisition Impact
-- Roster Impact
+- general game-derived Development Advice
+- Latest Source Report ID
 - Last Updated Date
-- Latest Source Report
-- Latest Game Number
+- Current Record Version
 
-## Historical Information That Should Not Be Overwritten
+### Hitter Zone Reports own
 
-These records should remain historical and additive:
+- Hitter Trend Summary
+- hitter-specific Development Advice
+- hitter evidence contribution to Current Trend and Watch Status
+- latest hitter source reference and update date
 
-- Every Daily Baseball game record
-- Every Hitter Zone Report
-- Every Pitcher Zone Report
-- Every Acquisition record or transaction evaluation
-- Every Front Office/Financials planning record by player/year/decision
-- Source notes, scouting summaries, zone notes, box score summaries, and report IDs
+### Pitcher Zone Reports own
+
+- Pitcher Trend Summary
+- pitcher-specific Development Advice
+- pitcher evidence contribution to Current Trend and Watch Status
+- latest pitcher source reference and update date
+
+### Acquisitions owns
+
+- Acquisition Impact
+- transaction-derived Roster Impact
+- acquisition source reference and update date
+
+### Front Office/Financials owns
+
+- Financial/Control Impact
+- financial source reference and update date
+
+### Colorado Rockies Base owns
+
+- Player ID and permanent identity
+- verified organization, level, roster status, ratings, potential, contract baseline, and organizational baseline
+- baseline version and baseline update date
+
+### Qualified Player Development synthesis owns
+
+- Current Organizational Role
+- Current Rebuild Fit
+- final Current Trend
+- Watch Status when multiple report types must be reconciled
+
+### Overwrite safeguards
+
+1. A newer version from the same source type may supersede the earlier current value.
+2. One source type may not erase or replace a field owned by another source type.
+3. Blank, missing, incomplete, or no-grade input does not erase a supported current value.
+4. Corrections supersede the affected version and must preserve the correction trail.
+5. If dates or game numbers conflict, stop the overwrite and mark the update for review.
+6. Missing Player IDs remain unlinked and cannot update a Player Development record automatically.
+7. Individual historical reports are never deleted or overwritten by a later game.
+8. A batting-stance adjustment may be recommended only after approximately 10–20 games show a repeated pitch-type, zone-location, and contact/result pattern. One game or one at-bat is never sufficient.
+
+## Spring Games 1–7 Validation Plan
+
+The first implementation must be tested with Spring Games 1–7 before optional fields or automation work begins.
+
+### Test sequence
+
+1. Load a small verified player sample into Colorado Rockies Base.
+2. Create one Daily Baseball record for each Spring Game 1 through Spring Game 7.
+3. Record exact inning coverage for every game, including partial or missing coverage.
+4. Link each game to its Source Reports.
+5. Create Hitter Zone and Pitcher Zone records only where supplied evidence supports them.
+6. Route each completed report to the required workflow destinations.
+7. Apply qualified Player Development updates sequentially from Game 1 through Game 7.
+8. Confirm that each verified player still has exactly one current Player Development record.
+9. Confirm that later qualified games overwrite only source-owned current fields.
+10. Confirm that every Daily Baseball and zone report remains available as historical evidence.
+11. Enter at least one correction as a new version and confirm that the correction trail is preserved.
+12. Test a partial game, a result-only report, a missing inning, and a player without a verified Player ID.
+13. Confirm that missing data is visibly marked and never filled by inference.
+14. Confirm that acquisition and financial fields are not overwritten by game reports.
+15. Confirm that no batting-stance recommendation is produced from Games 1–7 alone.
+
+### Acceptance criteria
+
+The required-field-first design passes when:
+
+- Spring Games 1–7 can be stored without inventing any detail or Player ID.
+- Every game has a stable Game ID, coverage status, routing status, correction status, and version.
+- Historical reports remain additive and traceable to Source Reports.
+- Player Development maintains one current record per verified player.
+- Latest-game updates affect only their approved fields.
+- Corrections supersede earlier versions without deleting history.
+- Partial and missing coverage are clearly distinguishable from complete coverage.
+- External acquisition targets can be recorded without forcing an unverified Player ID.
+- No optional field, formula, automation, script, or dashboard is required to complete the test.
 
 ## Approval Gate
 
-After this structure is approved, the next phase should create Airtable import templates and field maps only. Automations, formulas, scripts, dashboards, or generated code should wait until the Airtable schema has been validated with sample records.
+PR #2 documents the approved design and validation plan only.
+
+After this plan is merged:
+
+1. Create only the required Airtable fields and links.
+2. Run the Spring Games 1–7 validation.
+3. Record defects and necessary field changes.
+4. Obtain approval of the validated required schema.
+5. Add optional fields only after that approval.
+6. Build import templates, formulas, automations, scripts, and dashboards in later, separately reviewed phases.
