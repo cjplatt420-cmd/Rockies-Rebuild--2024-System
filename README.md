@@ -1,102 +1,89 @@
 # Rockies Rebuild 2024 System
 
-This repository is for the Rockies Rebuild 2024 system.
+This repository defines the Airtable-ready workflow system for the Rockies Rebuild 2024 project.
 
-## Project Goal
+## Workflow tables
 
-Build Airtable-ready workflow tables for:
+### Seven main workflow tables
 
-- Colorado Rockies Base
-- Player Development
-- Daily Baseball
-- Hitter Zone Reports
-- Pitcher Zone Reports
-- Acquisitions
-- Front Office/Financials
+1. Colorado Rockies Base
+2. Player Development
+3. Daily Baseball
+4. Hitter Zone Reports
+5. Pitcher Zone Reports
+6. Acquisitions
+7. Front Office/Financials
 
-## Core Linking Rules
+### Supporting evidence table
 
-- Use **Player ID** as the permanent, stable identifier for every player.
-- Use **Player Name** as the readable linked-record field.
-- Connect each workflow table to the main **Colorado Rockies Base** player table.
-- Use lookup fields to bring baseline player information into workflow tables.
-- Do not manually duplicate baseline information when a lookup field can provide it.
+8. Source Reports
 
-Baseline lookup information may include:
+Source Reports preserves the evidence, coverage, routing, correction, and version history behind the seven decision-making workflows.
 
-- Player ID
-- Player Name
-- Position
-- Organization level
-- Age
-- Bats
-- Throws
-- Overall rating
-- Potential
-- Contract status
-- Forty-man roster status
-- Organizational role
+## Permanent evidence rule
 
-## Player Development Rules
+> Do not invent missing details or Player IDs.
 
-The Player Development table should maintain one current record per player.
+- Store only supported information.
+- Mark missing, incomplete, partial, result-only, pending, and unresolved information explicitly.
+- Never infer or generate a Player ID.
+- Preserve earlier evidence when a correction creates a new version.
 
-It should accept information from:
+## Core data model
 
-- Complete Game Analysis Reports
-- Hitter Zone Reports
-- Pitcher Zone Reports
-- Acquisitions and roster-change reports
-- Foundation reports
+- Colorado Rockies Base is the verified player source of truth.
+- Player ID is the stable player key.
+- Player Name is the readable linked-record field.
+- Every table uses a directly editable record ID as its Airtable primary field.
+- Downstream player fields link to Colorado Rockies Base and obtain Player ID and baseline details through lookups.
+- A missing Player ID stops the player link and any automatic Player Development update.
+- Player Development maintains one current record per verified player.
+- Daily Baseball, zone reports, acquisitions, financial records, and source reports remain historical and additive.
 
-Latest-game information should overwrite the previous current-status fields instead of creating duplicate player records.
+## Player Development ownership
 
-Historical game reports should remain stored in their own report tables so earlier analysis is not lost.
+Each workflow may update only the current fields it owns:
 
-Current Player Development fields may include:
+- Daily Baseball owns latest-game evidence.
+- Hitter Zone Reports owns hitter-trend evidence.
+- Pitcher Zone Reports owns pitcher-trend evidence.
+- Acquisitions owns acquisition and transaction impact.
+- Front Office/Financials owns financial and control impact.
+- Qualified Player Development synthesis owns final trend, advice, organizational role, rebuild fit, and Watch Status.
+- Colorado Rockies Base owns permanent identity and verified baseline information.
 
-- Current development trend
-- Trend direction
-- Latest-game status
-- Recent positives
-- Recent negatives
-- Development advice
-- Organizational role
-- Rebuild fit
-- Recommendation
-- Watch status
-- Acquisition impact
-- Roster impact
-- Last updated date
-- Latest source report
-- Latest game number
+Blank, missing, incomplete, or no-grade input never erases supported current evidence.
 
-## Report and History Rules
+## Correction model
 
-- Keep permanent baseline information in the Colorado Rockies Base.
-- Keep current player evaluations in Player Development.
-- Keep individual game records and reports in the appropriate report tables.
-- Link reports to players through Player ID and Player Name.
-- Preserve historical reports rather than overwriting them.
-- Only current-status fields in Player Development should be overwritten by the newest qualified report.
+Corrections are immutable versions:
 
-## Project Plan
+1. Preserve the earlier record.
+2. Create the next VNN record.
+3. Link the new record through Supersedes Record.
+4. Record the exact correction.
+5. Mark the earlier record Superseded.
+6. Never delete or silently rewrite historical evidence.
 
-The first schema-first project plan is documented in [`docs/project-plan.md`](docs/project-plan.md). It covers the recommended repository folder structure, Airtable table list, field names, field types, links, lookups, Player Development overwrite fields, and historical records that should not be overwritten.
+## Current phase
 
-## Initial Codex Assignment
+Phase 1 approved and merged the required-field-first project plan.
 
-Start by providing:
+Phase 2 creates documentation for the required Airtable fields and links and validates the design with Spring Games 1–7. It does not create CSV templates, formulas, automations, scripts, dashboards, or interfaces.
 
-1. The recommended repository folder structure.
-2. The complete Airtable table list.
-3. The field names for each table.
-4. The Airtable field type for every field.
-5. The links required between tables.
-6. Which fields should be lookups.
-7. Which Player Development fields should be overwritten by the latest report.
-8. Which information should remain historical.
+## Documentation
 
-Do not write code yet.
+- [Project plan](docs/project-plan.md) — approved scope, record ID formats, table schemas, and Spring Games 1–7 validation matrix
+- [Required field definitions](docs/field-definitions.md) — exact Phase 2 fields, Airtable types, and controlled choices
+- [Linking rules](docs/linking-rules.md) — link direction, cardinality, reciprocal backlinks, and lookups
+- [Overwrite rules](docs/overwrite-rules.md) — source ownership, qualification gates, corrections, and Player Development updates
+- [Airtable setup guide](docs/airtable-setup-guide.md) — step-by-step required-field build and validation procedure
 
-Explain the proposed structure first and wait for approval before creating import templates, formulas, automations, scripts, or other code.
+## Approval gates
+
+1. Review and approve the Phase 2 documentation.
+2. Create only the required Airtable fields and links.
+3. Validate with Spring Games 1–7.
+4. Record defects and required schema changes.
+5. Approve the validated required schema.
+6. Add optional fields and build templates, formulas, automations, scripts, dashboards, or interfaces only in later, separately reviewed phases.
