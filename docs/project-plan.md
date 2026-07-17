@@ -92,7 +92,7 @@ Purpose: player identity and verified baseline source of truth.
 
 | Required field | Airtable field type | Rule |
 | --- | --- | --- |
-| Player Record | Formula, primary field | Display Player ID – Player Name. |
+| Player Record | Single line text, primary field | Display Player ID – Player Name; populate manually or during import in the first build. |
 | Player ID | Single line text | Stable unique key; required only when verified. |
 | Player Name | Single line text | Readable player name. |
 | Organization | Single select | Current organization. |
@@ -295,7 +295,7 @@ Purpose: preserve the source, coverage, routing, correction, and version trail b
 | All report tables.Source Reports | Source Reports | Evidence, coverage, corrections, and version trail. |
 | Zone reports.Game ID | Daily Baseball | Tie player evidence to the historical game. |
 | Daily Baseball zone links | Hitter/Pitcher Zone Reports | Navigate from the game to derived reports. |
-| Acquisitions.Acquisition Record | Front Office/Financials | Tie roster decisions to financial impact. |
+| Front Office/Financials.Acquisition Record | Acquisitions | Tie financial impact to the related roster decision. |
 
 ## Source-Specific Overwrite Rules
 
